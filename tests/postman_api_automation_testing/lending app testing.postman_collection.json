@@ -1,0 +1,3533 @@
+{
+	"info": {
+		"_postman_id": "13a8cb45-c734-4746-908b-2bddaeba6697",
+		"name": "lending app testing",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "31394698",
+		"_collection_link": "https://www.postman.com/satellite-explorer-26450683/workspace/api-testing/collection/31394698-13a8cb45-c734-4746-908b-2bddaeba6697?action=share&source=collection_link&creator=31394698"
+	},
+	"item": [
+		{
+			"name": "AdminManagement",
+			"item": [
+				{
+					"name": "Login",
+					"item": [
+						{
+							"name": "Login- Invalid credentials",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Invalid password should return 401\", function () {",
+											"  pm.response.to.have.status(401);",
+											"  pm.response.to.have.body(\"Username or password is wrong\");",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"username\": \"moses\",\n    \"password\": \"ldlks\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:8000/login",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8000",
+									"path": [
+										"login"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Login - non- existent username",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Non-existent user should return 401\", function () {",
+											"  pm.response.to.have.status(401);",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"username\": \"i-dont-exist\",\n    \"password\": \"yes\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:8000/login",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8000",
+									"path": [
+										"login"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "login - valid credentials",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"// Check if the response contains a token",
+											"pm.test(\"Response contains token\", function () {",
+											"    pm.response.to.have.jsonBody('token');",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"username\": \"moses\",\n    \"password\": \"123\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:8000/login/",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8000",
+									"path": [
+										"login",
+										""
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Login - SQL injection attempt",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"SQL Injection attempt should fail\", function () {",
+											"  pm.response.to.have.status(401);",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"username\": \"' OR '1'='1\",\n  \"password\": \"irrelevant\"\n}\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:8000/login",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8000",
+									"path": [
+										"login"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Client Management",
+			"item": [
+				{
+					"name": "AddClient",
+					"item": [
+						{
+							"name": "Successful client creation",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200 OK\", () => {",
+											"  pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response contains generated username\", () => {",
+											"  const res = pm.response.json();",
+											"  const expectedUsername = pm.environment.get(\"generated_username\");",
+											"  pm.expect(res.rows[0]).to.have.property(\"username\", expectedUsername);",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"function generateUsername(prefix = \"user\") {",
+											"    const randomNumber = Math.floor(Math.random() * 100000);",
+											"    return `${prefix}_${randomNumber}`;",
+											"}",
+											"",
+											"// Set the username as an environment variable",
+											"const newUsername = generateUsername(\"testuser\");",
+											"pm.environment.set(\"generated_username\", newUsername);"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"firstname\": \"Moses\",\n  \"lastname\": \"Gitonga\",\n  \"contactNumber\": \"0700123456\",\n  \"address\": \"Nyeri, Kenya\",\n  \"email\": \"moses+{{generated_username}}@example.com\",\n  \"username\": \"{{generated_username}}\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/addClient",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"addClient"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Duplicate username",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Should return 401 for duplicate username\", () => {",
+											"  pm.response.to.have.status(401);",
+											"  pm.expect(pm.response.text()).to.include(\"User already exist\");",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"firstname\": \"Jane\",\n  \"lastname\": \"Doe\",\n  \"contactNumber\": 123456789,\n  \"address\": \"Nairobi\",\n  \"email\": \"jane.dup@example.com\",\n  \"username\": \"{{generated_username}}\"\n}\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/addClient",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"addClient"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Missing require fiel",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"const rand = Math.floor(Math.random() * 100000);",
+											"pm.environment.set(\"unique_username\", `user_${rand}`);"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Should return error for missing fields\", () => {",
+											"  pm.expect(pm.response.code).to.be.oneOf([400, 422, 500]); // depending on how your backend responds",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"firstname\": \"Charlie\",\n  \"lastname\": \"Brown\",\n  \"contactNumber\": 1234567890,\n  \"address\": \"Eldoret\",\n  \"username\": \"{{unique_username}}\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/addClient",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"addClient"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Get Client",
+					"item": [
+						{
+							"name": "successful Get client",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"const randomInt = Math.floor(Math.random() * 100000);",
+											"const newUsername = `moses_${randomInt}`;",
+											"const email = `moses_${randomInt}@example.com`;",
+											"const password = \"123456\";",
+											"",
+											"pm.environment.set(\"unique_username\", newUsername);",
+											"pm.environment.set(\"unique_email\", email);",
+											"pm.environment.set(\"test_password\", password);",
+											"",
+											"const newClientPayload = {",
+											"  firstname: \"Moses\",",
+											"  lastname: \"Gitonga\",",
+											"  contactNumber: 123456789,",
+											"  address: \"Nairobi\",",
+											"  email: email,",
+											"  username: newUsername,",
+											"  password: password",
+											"};",
+											"",
+											"pm.sendRequest({",
+											"  url: pm.environment.get(\"base_url\") + \"/addClient\",",
+											"  method: \"POST\",",
+											"  header: {",
+											"    \"Content-Type\": \"application/json\"",
+											"  },",
+											"  body: {",
+											"    mode: \"raw\",",
+											"    raw: JSON.stringify(newClientPayload)",
+											"  }",
+											"}, (err1, res1) => {",
+											"  if (!err1 && res1.code === 200) {",
+											"    const client = res1.json();",
+											"    pm.environment.set(\"created_client_id\", client.rows[0].id);",
+											"",
+											"    // Now login",
+											"    pm.sendRequest({",
+											"      url: pm.environment.get(\"base_url\") + \"/login\",",
+											"      method: \"POST\",",
+											"      header: {",
+											"        \"Content-Type\": \"application/json\"",
+											"      },",
+											"      body: {",
+											"        mode: \"raw\",",
+											"        raw: JSON.stringify({ username: newUsername, password })",
+											"      }",
+											"    }, (err2, res2) => {",
+											"      if (!err2 && res2.code === 200) {",
+											"        const token = res2.json().token;",
+											"        pm.environment.set(\"auth_token\", token);",
+											"        console.log(\"✔️ Token set successfully:\", token);",
+											"      } else {",
+											"        console.error(\"Login failed\", err2 || res2.text());",
+											"      }",
+											"    });",
+											"  } else {",
+											"    console.error(\"Client creation failed\", err1 || res1.text());",
+											"  }",
+											"});",
+											"",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status is 200\", () => {",
+											"  pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Correct client info returned\", () => {",
+											"  const res = pm.response.json();",
+											"  pm.expect(res).to.have.property(\"username\", pm.environment.get(\"unique_username\"));",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{auth_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{auth_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/client/{{created_client_id}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"client",
+										"{{created_client_id}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Unauthorized get",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Should return 403 Forbidden\", () => {",
+											"  pm.response.to.have.status(403);",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/client/{{created_client_id}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"client",
+										"{{created_client_id}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Invalid id",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Client not found or null\", () => {",
+											"  const json = pm.response.json();",
+											"  pm.expect(json).to.be.oneOf([null, {}, undefined]); ",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{auth_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/client/999999992",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"client",
+										"999999992"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Get All clients",
+					"item": [
+						{
+							"name": "Successful get all clients",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"const randomInt = Math.floor(Math.random() * 100000);",
+											"const username = `moses_${randomInt}`;",
+											"const email = `moses_${randomInt}@example.com`;",
+											"const password = \"123456\";",
+											"",
+											"pm.environment.set(\"unique_username\", username);",
+											"pm.environment.set(\"unique_email\", email);",
+											"pm.environment.set(\"test_password\", password);",
+											"",
+											"const payload = {",
+											"  firstname: \"Moses\",",
+											"  lastname: \"Gitonga\",",
+											"  contactNumber: 123456789,",
+											"  address: \"Nairobi\",",
+											"  email,",
+											"  username,",
+											"  password",
+											"};",
+											"",
+											"// Step 1: Create new client",
+											"pm.sendRequest({",
+											"  url: pm.environment.get(\"base_url\") + \"/addClient\",",
+											"  method: \"POST\",",
+											"  header: { \"Content-Type\": \"application/json\" },",
+											"  body: { mode: \"raw\", raw: JSON.stringify(payload) }",
+											"}, (err1, res1) => {",
+											"  if (err1 || res1.code !== 200) {",
+											"    console.error(\"Client creation failed\", err1 || res1.text());",
+											"    return;",
+											"  }",
+											"",
+											"  // Step 2: Login to get token",
+											"  const loginPayload = { username, password };",
+											"",
+											"  pm.sendRequest({",
+											"    url: pm.environment.get(\"base_url\") + \"/login\",",
+											"    method: \"POST\",",
+											"    header: { \"Content-Type\": \"application/json\" },",
+											"    body: { mode: \"raw\", raw: JSON.stringify(loginPayload) }",
+											"  }, (err2, res2) => {",
+											"    if (err2 || res2.code !== 200) {",
+											"      console.error(\"Login failed\", err2 || res2.text());",
+											"      return;",
+											"    }",
+											"",
+											"    const token = res2.json().token;",
+											"    pm.environment.set(\"auth_token\", token);",
+											"  });",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200 OK\", () => {",
+											"  pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Should return an array of clients\", () => {",
+											"  const data = pm.response.json();",
+											"  pm.expect(data).to.be.an(\"array\");",
+											"  pm.expect(data.length).to.be.greaterThan(0);",
+											"});",
+											"",
+											"pm.test(\"Recently created client is in the list\", () => {",
+											"  const data = pm.response.json();",
+											"  const match = data.find(client => client.username === pm.environment.get(\"unique_username\"));",
+											"  pm.expect(match).to.exist;",
+											"  pm.expect(match.email).to.eql(pm.environment.get(\"unique_email\"));",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{auth_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "file",
+									"file": {}
+								},
+								"url": {
+									"raw": "{{base_url}}/allClients",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"allClients"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Unauthorized token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Should return 403 - Missing token\", () => {",
+											"  pm.response.to.have.status(403);",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/allClients",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"allClients"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Malformed token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Should return 403 - Malformed token\", () => {",
+											"  pm.response.to.have.status(403);",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "jwt",
+									"jwt": [
+										{
+											"key": "secret",
+											"value": "dd",
+											"type": "string"
+										},
+										{
+											"key": "algorithm",
+											"value": "HS256",
+											"type": "string"
+										},
+										{
+											"key": "isSecretBase64Encoded",
+											"value": false,
+											"type": "boolean"
+										},
+										{
+											"key": "payload",
+											"value": "{}",
+											"type": "string"
+										},
+										{
+											"key": "addTokenTo",
+											"value": "header",
+											"type": "string"
+										},
+										{
+											"key": "headerPrefix",
+											"value": "Bearer",
+											"type": "string"
+										},
+										{
+											"key": "queryParamKey",
+											"value": "token",
+											"type": "string"
+										},
+										{
+											"key": "header",
+											"value": "{}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/allClients",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"allClients"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Get client by email",
+					"item": [
+						{
+							"name": "Success get by email",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"const randomInt = Math.floor(Math.random() * 100000);",
+											"const username = `moses_${randomInt}`;",
+											"const email = `moses_${randomInt}@example.com`;",
+											"const password = \"123456\";",
+											"",
+											"pm.environment.set(\"unique_username\", username);",
+											"pm.environment.set(\"unique_email\", email);",
+											"pm.environment.set(\"test_password\", password);",
+											"",
+											"const payload = {",
+											"  firstname: \"Moses\",",
+											"  lastname: \"Gitonga\",",
+											"  contactNumber: 123456789,",
+											"  address: \"Nairobi\",",
+											"  email,",
+											"  username,",
+											"  password",
+											"};",
+											"",
+											"// Step 1: Create new client",
+											"pm.sendRequest({",
+											"  url: pm.environment.get(\"base_url\") + \"/addClient\",",
+											"  method: \"POST\",",
+											"  header: { \"Content-Type\": \"application/json\" },",
+											"  body: { mode: \"raw\", raw: JSON.stringify(payload) }",
+											"}, (err1, res1) => {",
+											"  if (err1 || res1.code !== 200) {",
+											"    console.error(\"Client creation failed\", err1 || res1.text());",
+											"    return;",
+											"  }",
+											"",
+											"  // Step 2: Login to get token",
+											"  const loginPayload = { username, password };",
+											"",
+											"  pm.sendRequest({",
+											"    url: pm.environment.get(\"base_url\") + \"/login\",",
+											"    method: \"POST\",",
+											"    header: { \"Content-Type\": \"application/json\" },",
+											"    body: { mode: \"raw\", raw: JSON.stringify(loginPayload) }",
+											"  }, (err2, res2) => {",
+											"    if (err2 || res2.code !== 200) {",
+											"      console.error(\"Login failed\", err2 || res2.text());",
+											"      return;",
+											"    }",
+											"",
+											"    const token = res2.json().token;",
+											"    pm.environment.set(\"auth_token\", token);",
+											"  });",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200 OK\", () => {",
+											"  pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Should return the correct client data\", () => {",
+											"  const response = pm.response.json();",
+											"  pm.expect(response).to.have.property('email', pm.environment.get(\"unique_email\"));",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{auth_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/email/{{unique_email}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"email",
+										"{{unique_email}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Invalid email",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 404 Not Found\", () => {",
+											"  pm.response.to.have.status(404);",
+											"});",
+											"",
+											"pm.test(\"Response body should indicate no client found\", () => {",
+											"  const response = pm.response.json();",
+											"  pm.expect(response).to.eql({});",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{auth_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/email/idontexist@example.com",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"email",
+										"idontexist@example.com"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "No token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 403 Forbidden\", () => {",
+											"  pm.response.to.have.status(403);",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/email/{{unique_email}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"email",
+										"{{unique_email}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Ensure the returned client matches the requested email",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Returned client matches the requested email\", () => {",
+											"  const response = pm.response.json();",
+											"  pm.expect(response.email).to.eql(pm.environment.get(\"unique_email\"));",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{auth_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/email/{{unique_email}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"email",
+										"{{unique_email}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Delete client",
+					"item": [
+						{
+							"name": "successful deletion",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"// Step 0: Generate unique credentials",
+											"const rand = Math.floor(Math.random() * 1000000);",
+											"const username = `moses_${rand}`;",
+											"const email = `moses_${rand}@example.com`;",
+											"const password = \"123456\";",
+											"",
+											"pm.environment.set(\"unique_username\", username);",
+											"pm.environment.set(\"unique_email\", email);",
+											"pm.environment.set(\"test_password\", password);",
+											"",
+											"// Step 1: Register the user",
+											"const registerPayload = {",
+											"  firstname: \"Moses\",",
+											"  lastname: \"Gitonga\",",
+											"  contactNumber: \"0700000000\",",
+											"  address: \"Nairobi\",",
+											"  email: email,",
+											"  username: username,",
+											"  password: password",
+											"};",
+											"",
+											"pm.sendRequest({",
+											"  url: pm.environment.get(\"base_url\") + \"/addClient\",",
+											"  method: \"POST\",",
+											"  header: {",
+											"    \"Content-Type\": \"application/json\"",
+											"  },",
+											"  body: {",
+											"    mode: \"raw\",",
+											"    raw: JSON.stringify(registerPayload)",
+											"  }",
+											"}, (err1, res1) => {",
+											"  if (!err1 && res1.code === 200) {",
+											"    const clientId = res1.json().rows[0].id;",
+											"    pm.environment.set(\"created_client_id\", clientId);",
+											"",
+											"    // Step 2: Login to get JWT token",
+											"    const loginPayload = {",
+											"      username: username,",
+											"      password: password",
+											"    };",
+											"",
+											"    pm.sendRequest({",
+											"      url: pm.environment.get(\"base_url\") + \"/login\",",
+											"      method: \"POST\",",
+											"      header: {",
+											"        \"Content-Type\": \"application/json\"",
+											"      },",
+											"      body: {",
+											"        mode: \"raw\",",
+											"        raw: JSON.stringify(loginPayload)",
+											"      }",
+											"    }, (err2, res2) => {",
+											"      if (!err2 && res2.code === 200) {",
+											"        const token = res2.json().token;",
+											"        pm.environment.set(\"auth_token\", token);",
+											"      } else {",
+											"        console.error(\"Login failed:\", err2 || res2.text());",
+											"      }",
+											"    });",
+											"  } else {",
+											"    console.error(\"Client creation failed:\", err1 || res1.text());",
+											"  }",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Response should be 200 OK\", function () {",
+											"  pm.response.to.have.status(200);",
+											"});",
+											"",
+											"const expectedId = pm.environment.get(\"created_client_id\");",
+											"",
+											"pm.test(\"Response should contain deleted message\", function () {",
+											"  const json = pm.response.json();",
+											"  pm.expect(json.msg).to.include(`Deleted client with an id of ${expectedId}`);",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{auth_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/clients/{{created_client_id}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"clients",
+										"{{created_client_id}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "deleting client twice",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Should still return 200 or 404 (depending on backend)\", function () {",
+											"  pm.expect(pm.response.code).to.be.oneOf([200, 404]);",
+											"});",
+											"",
+											"pm.test(\"Response should indicate nothing was deleted\", function () {",
+											"  const json = pm.response.json();",
+											"  pm.expect(json.msg || json.message || \"\").to.match(/not found|no rows/i);",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{auth_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/clients/{{created_client_id}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"clients",
+										"{{created_client_id}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "No auth token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Should return 403 Forbidden\", function () {",
+											"  pm.response.to.have.status(403);",
+											"});",
+											"",
+											"pm.test(\"Should return an error message for missing token\", function () {",
+											"  const json = pm.response.json();",
+											"  pm.expect(json.message || \"\").to.include(\"token\");",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/clients/{{created_client_id}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"clients",
+										"{{created_client_id}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Update client",
+					"item": [
+						{
+							"name": "successful update",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"// 👮🏾 Login first to get token",
+											"pm.sendRequest({",
+											"  url: pm.environment.get(\"base_url\") + \"/login\",",
+											"  method: \"POST\",",
+											"  header: {",
+											"    \"Content-Type\": \"application/json\"",
+											"  },",
+											"  body: {",
+											"    mode: \"raw\",",
+											"    raw: JSON.stringify({",
+											"      email: \"moses@example.com\",",
+											"      password: \"123\"",
+											"    })",
+											"  }",
+											"}, function (err, res) {",
+											"  if (!err && res.code === 200) {",
+											"    const token = res.json().token;",
+											"    pm.environment.set(\"auth_token\", token);",
+											"",
+											"    // 💾 Create client update body",
+											"    const body = {",
+											"      firstname: \"UpdatedFirst\",",
+											"      lastname: \"UpdatedLast\",",
+											"      contactNumber: \"12345678\",",
+											"      email: \"updated@example.com\",",
+											"      address: \"Updated Address\"",
+											"    };",
+											"",
+											"    pm.environment.set(\"client_update_data\", JSON.stringify(body));",
+											"",
+											"    // ⏱ Save start time for timeout test",
+											"    pm.variables.set(\"startTime\", Date.now());",
+											"  } else {",
+											"    console.log(\"Login failed\");",
+											"  }",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Should return 200 OK\", () => {",
+											"  pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Client details should be updated\", () => {",
+											"  const res = pm.response.json();",
+											"  pm.expect(res.firstname).to.eql(\"Moses Updated\");",
+											"  pm.expect(res.email).to.eql(\"moses_updated@example.com\");",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"firstname\": \"Moses Updated\",\n  \"lastname\": \"Gitonga\",\n  \"contactNumber\": 987654321,\n  \"email\": \"moses_updated@example.com\",\n  \"address\": \"Eldoret\"\n}\n\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/clients/{{created_client_id}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"clients",
+										"{{created_client_id}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Invalid token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"🔐 Should return 401 without auth token\", function () {",
+											"  pm.expect(pm.response.code).to.eql(401);",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"firstname\": \"Moses Updated\",\n  \"lastname\": \"Gitonga\",\n  \"contactNumber\": 987654321,\n  \"email\": \"moses_updated@example.com\",\n  \"address\": \"Eldoret\"\n}\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/clients/{{created_client_id}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"clients",
+										"{{created_client_id}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Invalid id",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\" Should return empty array\", function () {",
+											"  const json = pm.response.json();",
+											"  pm.expect(json).to.be.an(\"array\").that.is.empty;",
+											"});",
+											"",
+											"pm.test(\"Should include an error message\", function () {",
+											"  try {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json.message || json.error || \"\").to.be.a(\"string\").and.not.empty;",
+											"  } catch (err) {",
+											"    console.warn(\"⚠️ No JSON body returned.\");",
+											"  }",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"firstname\": \"Eve\",\n  \"lastname\": \"Attacker\",\n  \"contactNumber\": \"12345678\",\n  \"address\": \"Injection Street\",\n  \"email\": \"moses@example.com\"\n}\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/clients/234559932",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"clients",
+										"234559932"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "SQL Injection",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Should reject malicious ID\", () => {",
+											"  pm.expect(pm.response.code).to.not.equal(200);",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"firstname\": \"1; DROP TABLE clients\",\n  \"lastname\": \"Gitonga\",\n  \"contactNumber\": 987654321,\n  \"email\": \"moses_updated@example.com\",\n  \"address\": \"Eldoret\"\n}\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/clients/{{created_client_id}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"clients",
+										"{{created_client_id}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Loan Management",
+			"item": [
+				{
+					"name": "Create Loan",
+					"item": [
+						{
+							"name": "Successful loan creation",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Loan created successfully\", () => {",
+											"  pm.response.to.have.status(200);",
+											"  const res = pm.response.json();",
+											"  pm.expect(res.type).to.eql(\"Personal Loan\");",
+											"  pm.expect(res.status).to.eql(\"Pending\"); ",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"const randomInt = Math.floor(Math.random() * 100000);",
+											"const newUsername = `moses_${randomInt}`;",
+											"const email = `moses_${randomInt}@example.com`;",
+											"const password = \"123456\";",
+											"",
+											"pm.environment.set(\"unique_username\", newUsername);",
+											"pm.environment.set(\"unique_email\", email);",
+											"pm.environment.set(\"test_password\", password);",
+											"// pm.environment.set(\"username\", username)",
+											"",
+											"const newClientPayload = {",
+											"  firstname: \"Moses\",",
+											"  lastname: \"Gitonga\",",
+											"  contactNumber: 123456789,",
+											"  address: \"Nairobi\",",
+											"  email: email,",
+											"  username: newUsername,",
+											"  password: password",
+											"};",
+											"",
+											"pm.sendRequest({",
+											"  url: pm.environment.get(\"base_url\") + \"/addClient\",",
+											"  method: \"POST\",",
+											"  header: {",
+											"    \"Content-Type\": \"application/json\"",
+											"  },",
+											"  body: {",
+											"    mode: \"raw\",",
+											"    raw: JSON.stringify(newClientPayload)",
+											"  }",
+											"}, (err1, res1) => {",
+											"  if (!err1 && res1.code === 200) {",
+											"    const client = res1.json();",
+											"    pm.environment.set(\"created_client_id\", client.rows[0].id);",
+											"",
+											"    // Now login",
+											"    pm.sendRequest({",
+											"      url: pm.environment.get(\"base_url\") + \"/login\",",
+											"      method: \"POST\",",
+											"      header: {",
+											"        \"Content-Type\": \"application/json\"",
+											"      },",
+											"      body: {",
+											"        mode: \"raw\",",
+											"        raw: JSON.stringify({ username: \"moses\", password: \"123\" })",
+											"      }",
+											"    }, (err2, res2) => {",
+											"      if (!err2 && res2.code === 200) {",
+											"        const token = res2.json().token;",
+											"        pm.environment.set(\"auth_token\", token);",
+											"        console.log(\"✔️ Token set successfully:\", token);",
+											"      } else {",
+											"        console.error(\"Login failed\", err2 || res2.text());",
+											"      }",
+											"    });",
+											"  } else {",
+											"    console.error(\"Client creation failed\", err1 || res1.text());",
+											"  }",
+											"});",
+											"",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"protocolProfileBehavior": {
+								"strictSSL": false,
+								"followOriginalHttpMethod": false,
+								"followAuthorizationHeader": false,
+								"followRedirects": true
+							},
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{auth_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"type\": \"Personal Loan\",\n  \"gross_loan\": 10000,\n  \"balance\": 10000,\n  \n  \"amort\": 2000,\n  \"terms\": 5,\n  \"date_released\": \"2025-04-01\",\n  \"maturity_date\": \"2025-09-01\",\n\t\"status\": \"pending\"\n}\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/loans/{{created_client_id}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"loans",
+										"{{created_client_id}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Missing token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Should reject unauthorized access\", () => {",
+											"  pm.response.to.have.status(403);",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"type\": \"Personal Loan\",\n  \"gross_loan\": 10000,\n  \"balance\": 10000,\n  \"amort\": 2000,\n  \"terms\": 5,\n  \"date_released\": \"2025-04-01\",\n  \"maturity_date\": \"2025-09-01\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/loans/{{created_client_id}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"loans",
+										"{{created_client_id}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "SQL Injection",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"SQL Injection attempt should fail\", () => {",
+											"  pm.response.to.not.have.status(201);",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{auth_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"type\": \"100; drop table clients;\",\n  \"gross_loan\": 10000,\n  \"balance\": 10000,\n  \"amort\": 2000,\n  \"terms\": 5,\n  \"date_released\": \"2025-04-01\",\n  \"maturity_date\": \"2025-09-01\"\n}\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/loans/{{created_client_id}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"loans",
+										"{{created_client_id}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "negative numbers",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Should fail with invalid data types\", function () {",
+											"  pm.response.to.have.status(400);",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{auth_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"type\": \"Personal\",\n  \"gross_loan\": -1000,\n  \"balance\": -3220,\n  \"amort\": -45,\n  \"terms\": -12,\n  \"date_released\": \"2025-04-20\",\n  \"maturity_date\": \"2026-04-20\"\n}\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/loans/{{created_client_id}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"loans",
+										"{{created_client_id}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Maturity date before release date",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Should fail if maturity date is before release date\", function () {",
+											"  pm.response.to.have.status(400);",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"type\": \"Business\",\n  \"gross_loan\": 10000,\n  \"balance\": 10000,\n  \"amort\": 500,\n  \"terms\": 20,\n  \"date_released\": \"2025-04-21\",\n  \"maturity_date\": \"2025-01-01\"\n}\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/loans/{{created_client_id}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"loans",
+										"{{created_client_id}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "All Loans",
+					"item": [
+						{
+							"name": "Successful get loans",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"// Step 1: Login to get the auth token",
+											"pm.sendRequest({",
+											"  url: pm.environment.get(\"base_url\") + \"/login\",",
+											"  method: \"POST\",",
+											"  header: {",
+											"    \"Content-Type\": \"application/json\"",
+											"  },",
+											"  body: {",
+											"    mode: \"raw\",",
+											"    raw: JSON.stringify({",
+											"      email: \"admin@example.com\", // Replace with actual admin/test email",
+											"      password: \"123456\"",
+											"    })",
+											"  }",
+											"}, function (err, res) {",
+											"  if (!err && res.code === 200) {",
+											"    const token = res.json().token;",
+											"    pm.environment.set(\"token\", token);",
+											"",
+											"    // Step 2: Create a test client",
+											"    const timestamp = Date.now();",
+											"    const newClient = {",
+											"      firstname: \"Loan\",",
+											"      lastname: \"Tester\",",
+											"      email: `loantester${timestamp}@mail.com`,",
+											"      contactNumber: \"0712345678\",",
+											"      address: \"Postman Town\"",
+											"    };",
+											"",
+											"    pm.sendRequest({",
+											"      url: pm.environment.get(\"base_url\") + \"/clients\",",
+											"      method: \"POST\",",
+											"      header: {",
+											"        \"Content-Type\": \"application/json\",",
+											"        \"Authorization\": `Bearer ${token}`",
+											"      },",
+											"      body: {",
+											"        mode: \"raw\",",
+											"        raw: JSON.stringify(newClient)",
+											"      }",
+											"    }, function (err2, res2) {",
+											"      if (!err2 && res2.code === 201) {",
+											"        const clientId = res2.json().id || res2.json().client_id || res2.json().rows?.[0]?.id;",
+											"        pm.environment.set(\"created_client_id\", clientId);",
+											"",
+											"        // Step 3: Create a loan for the client",
+											"        const loan = {",
+											"          type: \"Personal\",",
+											"          gross_loan: 100000,",
+											"          balance: 100000,",
+											"          amort: 5000,",
+											"          terms: 24,",
+											"          date_released: \"2025-04-01\",",
+											"          maturity_date: \"2027-04-01\"",
+											"        };",
+											"",
+											"        pm.sendRequest({",
+											"          url: `${pm.environment.get(\"base_url\")}/loans/${clientId}`,",
+											"          method: \"POST\",",
+											"          header: {",
+											"            \"Content-Type\": \"application/json\",",
+											"            \"Authorization\": `Bearer ${token}`",
+											"          },",
+											"          body: {",
+											"            mode: \"raw\",",
+											"            raw: JSON.stringify(loan)",
+											"          }",
+											"        }, function (err3, res3) {",
+											"          if (!err3 && res3.code === 200) {",
+											"            console.log(\"Loan created for test client.\");",
+											"          } else {",
+											"            console.error(\"Loan creation failed:\", err3 || res3.text());",
+											"          }",
+											"        });",
+											"      } else {",
+											"        console.error(\"Client creation failed:\", err2 || res2.text());",
+											"      }",
+											"    });",
+											"",
+											"  } else {",
+											"    console.error(\"Login failed:\", err || res.text());",
+											"  }",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"  pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response should be an array of loans\", function () {",
+											"  const body = pm.response.json();",
+											"  pm.expect(body).to.be.an(\"array\");",
+											"  if (body.length > 0) {",
+											"    pm.expect(body[0]).to.have.property(\"firstname\");",
+											"    pm.expect(body[0]).to.have.property(\"lastname\");",
+											"    pm.expect(body[0]).to.have.property(\"type\");",
+											"    pm.expect(body[0]).to.have.property(\"gross_loan\");",
+											"    pm.expect(body[0]).to.have.property(\"status\");",
+											"  }",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{auth_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/allLoans",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"allLoans"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "No token provided",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Should return 403 or 401 if token is missing\", () => {",
+											"  pm.response.to.have.status(403);",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/allLoans",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"allLoans"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Get Loans for a client",
+					"item": [
+						{
+							"name": "Successful get loans",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"// Step 1: Login to get a token",
+											"pm.sendRequest({",
+											"  url: pm.environment.get(\"base_url\") + \"/login\",",
+											"  method: \"POST\",",
+											"  header: { \"Content-Type\": \"application/json\" },",
+											"  body: {",
+											"    mode: \"raw\",",
+											"    raw: JSON.stringify({",
+											"      email: \"admin@example.com\",   // Replace with valid email",
+											"      password: \"123456\"            // Replace with actual password",
+											"    })",
+											"  }",
+											"}, function (err, res) {",
+											"  if (!err && res.code === 200) {",
+											"    const token = res.json().token;",
+											"    pm.environment.set(\"token\", token);",
+											"",
+											"    // Step 2: Create a new client",
+											"    const timestamp = Date.now();",
+											"    const clientData = {",
+											"      firstname: \"Loaned\",",
+											"      lastname: \"Client\",",
+											"      email: `loaned${timestamp}@mail.com`,",
+											"      contactNumber: \"0722334455\",",
+											"      address: \"Test Lane\"",
+											"    };",
+											"",
+											"    pm.sendRequest({",
+											"      url: pm.environment.get(\"base_url\") + \"/clients\",",
+											"      method: \"POST\",",
+											"      header: {",
+											"        \"Content-Type\": \"application/json\",",
+											"        \"Authorization\": `Bearer ${token}`",
+											"      },",
+											"      body: {",
+											"        mode: \"raw\",",
+											"        raw: JSON.stringify(clientData)",
+											"      }",
+											"    }, function (err2, res2) {",
+											"      if (!err2 && res2.code === 201) {",
+											"        const clientId = res2.json().id || res2.json().client_id || res2.json().rows?.[0]?.id;",
+											"        pm.environment.set(\"created_client_id\", clientId);",
+											"",
+											"        // Step 3: Create a loan for the client",
+											"        const loan = {",
+											"          type: \"Education\",",
+											"          gross_loan: 200000,",
+											"          balance: 200000,",
+											"          amort: 10000,",
+											"          terms: 20,",
+											"          date_released: \"2025-04-10\",",
+											"          maturity_date: \"2026-12-31\"",
+											"        };",
+											"",
+											"        pm.sendRequest({",
+											"          url: `${pm.environment.get(\"base_url\")}/loans/${clientId}`,",
+											"          method: \"POST\",",
+											"          header: {",
+											"            \"Content-Type\": \"application/json\",",
+											"            \"Authorization\": `Bearer ${token}`",
+											"          },",
+											"          body: {",
+											"            mode: \"raw\",",
+											"            raw: JSON.stringify(loan)",
+											"          }",
+											"        }, function (err3, res3) {",
+											"          if (!err3 && res3.code === 200) {",
+											"            console.log(\"Loan created for client successfully.\");",
+											"          } else {",
+											"            console.error(\"Loan creation failed:\", err3 || res3.text());",
+											"          }",
+											"        });",
+											"",
+											"      } else {",
+											"        console.error(\"Client creation failed:\", err2 || res2.text());",
+											"      }",
+											"    });",
+											"",
+											"  } else {",
+											"    console.error(\"Login failed:\", err || res.text());",
+											"  }",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"  pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response is an array of loans\", function () {",
+											"  const body = pm.response.json();",
+											"  pm.expect(body).to.be.an(\"array\");",
+											"",
+											"  if (body.length > 0) {",
+											"    pm.expect(body[0]).to.have.property(\"firstname\");",
+											"    pm.expect(body[0]).to.have.property(\"id\");",
+											"    pm.expect(body[0]).to.have.property(\"type\");",
+											"    pm.expect(body[0]).to.have.property(\"gross_loan\");",
+											"    pm.expect(body[0]).to.have.property(\"client_id\");",
+											"  }",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{auth_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/loans/{{created_client_id}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"loans",
+										"{{created_client_id}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Comprehensive",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const response = pm.response.json();",
+											"const expectedClientId = pm.environment.get(\"created_client_id\");",
+											"",
+											"// ✅ 1. Basic HTTP checks",
+											"pm.test(\"Status code is 200\", () => {",
+											"  pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response time is below 500ms\", () => {",
+											"  pm.expect(pm.response.responseTime).to.be.below(500);",
+											"});",
+											"",
+											"pm.test(\"Content-Type is JSON\", () => {",
+											"  pm.response.to.have.header(\"Content-Type\", /application\\/json/);",
+											"});",
+											"",
+											"// ✅ 2. Response structure checks",
+											"pm.test(\"Response is an array\", () => {",
+											"  pm.expect(response).to.be.an(\"array\");",
+											"});",
+											"",
+											"// ✅ 3. If no loans, return an empty array",
+											"if (response.length === 0) {",
+											"  pm.test(\"No loans exist for this client\", () => {",
+											"    pm.expect(response.length).to.eql(0);",
+											"  });",
+											"} else {",
+											"  // ✅ 4. Validate required fields exist",
+											"  pm.test(\"Each loan object has expected fields\", () => {",
+											"    response.forEach(loan => {",
+											"      pm.expect(loan).to.have.all.keys(",
+											"        \"firstname\",",
+											"        \"id\",               // loan id",
+											"        \"type\",",
+											"        \"gross_loan\",",
+											"        \"amort\",",
+											"        \"terms\",",
+											"        \"date_released\",",
+											"        \"maturity_date\",",
+											"        \"balance\",",
+											"        \"status\",",
+											"        \"client_id\"",
+											"      );",
+											"\t\t\treturn;",
+											"    });",
+											"  });",
+											"",
+											"  // ✅ 5. Validate correct client_id in all loans",
+											"  pm.test(\"All loans belong to the correct client\", () => {",
+											"    response.forEach(loan => {",
+											"      pm.expect(loan.client_id).to.eql(parseInt(expectedClientId));",
+											"    });",
+											"  });",
+											"",
+											"  // ✅ 7. Check date format (ISO or YYYY-MM-DD)",
+											"  pm.test(\"Dates are in valid format\", () => {",
+											"    const isoRegex = /^\\d{4}-\\d{2}-\\d{2}$/;",
+											"    response.forEach(loan => {",
+											"      pm.expect(loan.date_released).to.match(isoRegex);",
+											"      pm.expect(loan.maturity_date).to.match(isoRegex);",
+											"    });",
+											"  });",
+											"",
+											"  // ✅ 8. Sanity check: balance <= gross_loan",
+											"  pm.test(\"Loan balance does not exceed gross loan\", () => {",
+											"    response.forEach(loan => {",
+											"      pm.expect(loan.balance).to.be.at.most(loan.gross_loan);",
+											"    });",
+											"  });",
+											"",
+											"  // ✅ 9. Terms are not negative or zero",
+											"  pm.test(\"Loan terms are valid\", () => {",
+											"    response.forEach(loan => {",
+											"      pm.expect(loan.terms).to.be.above(0);",
+											"    });",
+											"  });",
+											"}",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"const randomInt = Math.floor(Math.random() * 100000);",
+											"const newUsername = `moses_${randomInt}`;",
+											"const email = `moses_${randomInt}@example.com`;",
+											"const password = \"123456\";",
+											"",
+											"pm.environment.set(\"unique_username\", newUsername);",
+											"pm.environment.set(\"unique_email\", email);",
+											"pm.environment.set(\"test_password\", password);",
+											"// pm.environment.set(\"username\", username)",
+											"",
+											"const newClientPayload = {",
+											"  firstname: \"Moses\",",
+											"  lastname: \"Gitonga\",",
+											"  contactNumber: 123456789,",
+											"  address: \"Nairobi\",",
+											"  email: email,",
+											"  username: newUsername,",
+											"  password: password",
+											"};",
+											"",
+											"pm.sendRequest({",
+											"  url: pm.environment.get(\"base_url\") + \"/addClient\",",
+											"  method: \"POST\",",
+											"  header: {",
+											"    \"Content-Type\": \"application/json\"",
+											"  },",
+											"  body: {",
+											"    mode: \"raw\",",
+											"    raw: JSON.stringify(newClientPayload)",
+											"  }",
+											"}, (err1, res1) => {",
+											"  if (!err1 && res1.code === 200) {",
+											"    const client = res1.json();",
+											"    pm.environment.set(\"created_client_id\", client.rows[0].id);",
+											"",
+											"    // Now login",
+											"    pm.sendRequest({",
+											"      url: pm.environment.get(\"base_url\") + \"/login\",",
+											"      method: \"POST\",",
+											"      header: {",
+											"        \"Content-Type\": \"application/json\"",
+											"      },",
+											"      body: {",
+											"        mode: \"raw\",",
+											"        raw: JSON.stringify({ username: \"moses\", password: \"123\" })",
+											"      }",
+											"    }, (err2, res2) => {",
+											"      if (!err2 && res2.code === 200) {",
+											"        const token = res2.json().token;",
+											"        pm.environment.set(\"auth_token\", token);",
+											"        console.log(\"✔️ Token set successfully:\", token);",
+											"      } else {",
+											"        console.error(\"Login failed\", err2 || res2.text());",
+											"      }",
+											"    });",
+											"  } else {",
+											"    console.error(\"Client creation failed\", err1 || res1.text());",
+											"  }",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{auth_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/loans/{{created_client_id}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"loans",
+										"{{created_client_id}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Create loans for loans page",
+					"item": [
+						{
+							"name": "comprehensive",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"pm.request.body.raw = pm.request.body.raw.replace(",
+											"  /\"client_id\":\\s*\\d+/,",
+											"  `\"client_id\": ${pm.environment.get(\"created_client_id\")}`",
+											");"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const response = pm.response.json();",
+											"",
+											"// ✅ 1. Status and performance",
+											"pm.test(\"Status code is 200\", () => {",
+											"  pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response time is acceptable\", () => {",
+											"  pm.expect(pm.response.responseTime).to.be.below(500);",
+											"});",
+											"",
+											"// ✅ 2. Structure validation",
+											"pm.test(\"Response is an object\", () => {",
+											"  pm.expect(response).to.be.an(\"object\");",
+											"});",
+											"",
+											"pm.test(\"Loan object has expected fields\", () => {",
+											"  const expectedFields = [",
+											"    \"id\",",
+											"    \"client_id\",",
+											"    \"type\",",
+											"    \"status\",",
+											"    \"gross_loan\",",
+											"    \"balance\",",
+											"    \"amort\",",
+											"    \"terms\",",
+											"    \"date_released\",",
+											"    \"maturity_date\"",
+											"  ];",
+											"",
+											"  expectedFields.forEach(field => {",
+											"    pm.expect(response).to.have.property(field);",
+											"  });",
+											"});",
+											"",
+											"// ✅ 3. Values are logically consistent",
+											"pm.test(\"Balance does not exceed gross loan\", () => {",
+											"  pm.expect(response.balance).to.be.at.most(response.gross_loan);",
+											"});",
+											"",
+											"pm.test(\"Terms are positive\", () => {",
+											"  pm.expect(response.terms).to.be.above(0);",
+											"});",
+											"",
+											"pm.test(\"Status is valid\", () => {",
+											"  pm.expect(response.status).to.be.oneOf([\"Pending\", \"Approved\", \"Rejected\"]);",
+											"});",
+											"",
+											"pm.test(\"Loan type is a string\", () => {",
+											"  pm.expect(response.type).to.be.a(\"string\");",
+											"});",
+											"",
+											"// ✅ 4. Store loan ID in environment for future tests",
+											"pm.environment.set(\"created_loan_id\", response.id);",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{auth_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"client_id\": 0, // Will be replaced by Pre-request Script\n  \"type\": \"Business\",\n  \"status\": \"Pending\",\n  \"gross_loan\": 150000,\n  \"balance\": 150000,\n  \"amort\": 5000,\n  \"terms\": 30,\n  \"date_released\": \"2024-06-15\",\n  \"maturity_date\": \"2027-06-15\"\n}\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/loans",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"loans"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "missing token",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"// Pre-request Script",
+											"pm.request.body.raw = pm.request.body.raw.replace(",
+											"  /\"client_id\":\\s*\\d+/,",
+											"  `\"client_id\": ${pm.environment.get(\"created_client_id\")}`",
+											");",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Should create a loan with valid token\", () => {",
+											"  pm.response.to.have.status(200);",
+											"  pm.expect(pm.response.json()).to.have.property(\"id\");",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"client_id\": 0, // Will be replaced by Pre-request Script\n  \"type\": \"Business\",\n  \"status\": \"Pending\",\n  \"gross_loan\": 150000,\n  \"balance\": 150000,\n  \"amort\": 5000,\n  \"terms\": 30,\n  \"date_released\": \"2024-06-15\",\n  \"maturity_date\": \"2027-06-15\"\n}\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/loans",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"loans"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Update loan",
+					"item": [
+						{
+							"name": "Successful update",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"// Step 1: Create loan (adjust values accordingly)",
+											"const loanData = {",
+											"    client_id: pm.environment.get(\"created_client_id\"),",
+											"    type: \"Emergency\",",
+											"    status: \"Pending\",",
+											"    gross_loan: 10000,",
+											"    balance: 10000,",
+											"    amort: 1000,",
+											"    terms: 10,",
+											"    date_released: \"2024-10-01\",",
+											"    maturity_date: \"2025-10-01\"",
+											"};",
+											"",
+											"pm.sendRequest({",
+											"    url: pm.environment.get(\"base_url\") + \"/loans/\",",
+											"    method: \"POST\",",
+											"    header: {",
+											"        \"Content-Type\": \"application/json\",",
+											"        \"Authorization\": pm.environment.get(\"auth_token\")",
+											"    },",
+											"    body: {",
+											"        mode: \"raw\",",
+											"        raw: JSON.stringify(loanData)",
+											"    }",
+											"}, function (err, res) {",
+											"    if (err) {",
+											"        console.error(\"Loan creation failed:\", err);",
+											"    } else {",
+											"        const json = res.json();",
+											"        if (json.id) {",
+											"            pm.environment.set(\"created_loan_id\", json.id);",
+											"            console.log(\"Loan created with ID:\", json.id);",
+											"        } else {",
+											"            console.warn(\"⚠️ Loan not created. Response:\", json);",
+											"        }",
+											"    }",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Should update loan with valid data\", () => {",
+											"  pm.response.to.have.status(200);",
+											"  const res = pm.response.json();",
+											"  pm.expect(res[0]).to.have.property(\"id\");",
+											"  pm.expect(res[0]).to.have.property(\"type\", \"UpdatedType\");",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{auth_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"type\": \"Business\",\n  \"status\": \"Pending\",\n  \"gross_loan\": 15000,\n  \"balance\": 150000,\n  \"amort\": 5000,\n  \"terms\": 30,\n  \"date_released\": \"2024-06-15\",\n  \"maturity_date\": \"2027-06-15\"\n}\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/loans/{{created_loan_id}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"loans",
+										"{{created_loan_id}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "missing token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Should deny access without token\", () => {",
+											"  pm.response.to.have.status(403);",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "PATCH",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/loans/{{created_loan_id}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"loans",
+										"{{created_loan_id}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "New Request",
+							"request": {
+								"method": "PATCH",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/loans/{{created_loan_id}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"loans",
+										"{{created_loan_id}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Update loan payment",
+					"item": [
+						{
+							"name": "Successful update",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Should update loan balance from latest payment\", () => {",
+											"  pm.response.to.have.status(200);",
+											"  const res = pm.response.json();",
+											" ",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{auth_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/loan/{{created_loan_id}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"loan",
+										"{{created_loan_id}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Missing token",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"const baseUrl = pm.environment.get(\"base_url\") ",
+											"const token = pm.environment.get(\"auth_token\");",
+											"const loanId = pm.environment.get(\"created_loan_id\");",
+											"const clientId = pm.environment.get(\"created_client_id\");",
+											"",
+											"// Ensure required values are available",
+											"if (!loanId || !clientId || !token) {",
+											"  console.error(\"Missing loan_id, client_id, or token in environment.\");",
+											"  return;",
+											"}",
+											"",
+											"// Build payment payload",
+											"const paymentData = {",
+											"  amount: 1000,",
+											"  collection_date: new Date().toISOString().split(\"T\")[0],",
+											"  collected_by: \"System\",  // or your test user",
+											"  new_balance: 4000,",
+											"  method: \"Cash\",",
+											"  client_id: clientId",
+											"};",
+											"",
+											"pm.sendRequest({",
+											"  url: `${baseUrl}/payments/${loanId}`,",
+											"  method: \"POST\",",
+											"  header: {",
+											"    \"Content-Type\": \"application/json\",",
+											"    \"Authorization\": token",
+											"  },",
+											"  body: {",
+											"    mode: \"raw\",",
+											"    raw: JSON.stringify(paymentData)",
+											"  }",
+											"}, function (err, res) {",
+											"  if (!err && res.code === 200) {",
+											"    const payment = res.json();",
+											"    pm.environment.set(\"payment_id\", payment.id);",
+											"    console.log(\"Payment created. ID:\", payment.id);",
+											"  } else {",
+											"    console.error(\"Failed to create payment:\", err || res.text());",
+											"  }",
+											"});",
+											"",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Should reject request without token\", () => {",
+											"  pm.response.to.have.status(403);",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "PATCH",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/loan/{{created_loan_id}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"loan",
+										"{{created_loan_id}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Payment Management",
+			"item": [
+				{
+					"name": "Create payment",
+					"item": [
+						{
+							"name": "Successful payment",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Payment successfully created\", function () {",
+											"  pm.response.to.have.status(200);",
+											"  const body = pm.response.json();",
+											"  pm.expect(body).to.have.property(\"id\");",
+											"  pm.expect(body.amount).to.eql('1500.00');",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"const randomInt = Math.floor(Math.random() * 100000);",
+											"const newUsername = `moses_${randomInt}`;",
+											"const email = `moses_${randomInt}@example.com`;",
+											"const password = \"123456\";",
+											"",
+											"pm.environment.set(\"unique_username\", newUsername);",
+											"pm.environment.set(\"unique_email\", email);",
+											"pm.environment.set(\"test_password\", password);",
+											"// pm.environment.set(\"username\", username)",
+											"",
+											"const newClientPayload = {",
+											"  firstname: \"Moses\",",
+											"  lastname: \"Gitonga\",",
+											"  contactNumber: 123456789,",
+											"  address: \"Nairobi\",",
+											"  email: email,",
+											"  username: newUsername,",
+											"  password: password",
+											"};",
+											"",
+											"pm.sendRequest({",
+											"  url: pm.environment.get(\"base_url\") + \"/addClient\",",
+											"  method: \"POST\",",
+											"  header: {",
+											"    \"Content-Type\": \"application/json\"",
+											"  },",
+											"  body: {",
+											"    mode: \"raw\",",
+											"    raw: JSON.stringify(newClientPayload)",
+											"  }",
+											"}, (err1, res1) => {",
+											"  if (!err1 && res1.code === 200) {",
+											"    const client = res1.json();",
+											"    pm.environment.set(\"created_client_id\", client.rows[0].id);",
+											"",
+											"    // Now login",
+											"    pm.sendRequest({",
+											"      url: pm.environment.get(\"base_url\") + \"/login\",",
+											"      method: \"POST\",",
+											"      header: {",
+											"        \"Content-Type\": \"application/json\"",
+											"      },",
+											"      body: {",
+											"        mode: \"raw\",",
+											"        raw: JSON.stringify({ username: \"moses\", password: \"123\" })",
+											"      }",
+											"    }, (err2, res2) => {",
+											"      if (!err2 && res2.code === 200) {",
+											"        const token = res2.json().token;",
+											"        pm.environment.set(\"auth_token\", token);",
+											"        console.log(\"✔️ Token set successfully:\", token);",
+											"      } else {",
+											"        console.error(\"Login failed\", err2 || res2.text());",
+											"      }",
+											"    });",
+											"  } else {",
+											"    console.error(\"Client creation failed\", err1 || res1.text());",
+											"  }",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{auth_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"amount\": 1500,\n  \"collection_date\": \"2025-04-21\",\n  \"collected_by\": \"Admin Tester\",\n  \"new_balance\": 3500,\n  \"method\": \"M-Pesa\",\n  \"client_id\": {{created_client_id}}\n}\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/payments/{{created_loan_id}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"payments",
+										"{{created_loan_id}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Missing token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Should fail without token\", function () {",
+											"  pm.response.to.have.status(403);",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/payments/{{created_loan_id}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"payments",
+										"{{created_loan_id}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "SQL Injection",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Should reject SQL injection\", function () {",
+											"  pm.response.to.not.have.status(400); ",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{auth_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"amount\": 1500,\n  \"collection_date\": \"2025-04-21\",\n  \"collected_by\": \"; DROP TABLE loans;--r\",\n  \"new_balance\": 3500,\n  \"method\": \"M-Pesa\",\n  \"client_id\": {{created_client_id}}\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/payments/{{created_loan_id}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"payments",
+										"{{created_loan_id}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "View all payments",
+					"item": [
+						{
+							"name": "Successful view",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Successfully retrieves all payments\", function () {",
+											"  pm.response.to.have.status(200);",
+											"  const jsonData = pm.response.json();",
+											"  pm.expect(jsonData).to.be.an(\"array\");",
+											"  if (jsonData.length > 0) {",
+											"    pm.expect(jsonData[0]).to.have.property(\"firstname\");",
+											"    pm.expect(jsonData[0]).to.have.property(\"amount\");",
+											"  }",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{auth_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/allPayments",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"allPayments"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Missing token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Should reject request without token\", function () {",
+											"  pm.response.to.have.status(403);",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/allPayments",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"allPayments"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Response format",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Each payment has necessary fields\", function () {",
+											"  const payments = pm.response.json();",
+											"  payments.forEach(p => {",
+											"    pm.expect(p).to.have.property(\"firstname\");",
+											"    pm.expect(p).to.have.property(\"amount\");",
+											"    pm.expect(p).to.have.property(\"collection_date\");",
+											"  });",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{auth_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/allPayments",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"allPayments"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Client payments",
+					"item": [
+						{
+							"name": "Successful payment view",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Should return an array of payments for a valid client\", () => {",
+											"  pm.response.to.have.status(200);",
+											"  const payments = pm.response.json();",
+											"  pm.expect(payments).to.be.an(\"array\");",
+											"  if (payments.length > 0) {",
+											"    pm.expect(payments[0]).to.have.property(\"client_id\");",
+											"  }",
+											"});",
+											"pm.test(\"Response time is less than 200ms\", function () {",
+											"  pm.expect(pm.response.responseTime).to.be.below(200);",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{auth_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/payments/{{created_client_id}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"payments",
+										"{{created_client_id}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Client with no payment",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"// Generate a unique username based on current timestamp",
+											"const timestamp = Date.now();",
+											"const generatedUsername = `testuser_${timestamp}`;",
+											"",
+											"pm.environment.set(\"generated_username\", generatedUsername);",
+											"",
+											"// Payload for new client creation",
+											"const clientData = {",
+											"  firstname: \"Moses\",",
+											"  lastname: \"Gitonga\",",
+											"  contactNumber: \"0700123456\",",
+											"  address: \"Nyeri, Kenya\",",
+											"  email: `moses+${generatedUsername}@example.com`,",
+											"  username: generatedUsername",
+											"};",
+											"",
+											"// First, create the new client",
+											"pm.sendRequest({",
+											"  url: pm.environment.get(\"base_url\") + \"/addClient\",",
+											"  method: \"POST\",",
+											"  header: {",
+											"    \"Content-Type\": \"application/json\",",
+											"    \"Authorization\": pm.environment.get(\"auth_token\") // assuming auth_token is set",
+											"  },",
+											"  body: {",
+											"    mode: \"raw\",",
+											"    raw: JSON.stringify(clientData)",
+											"  }",
+											"}, function (err, res) {",
+											"  if (err || res.code !== 200) {",
+											"    console.error(\"Client creation failed\", err);",
+											"  } else {",
+											"    const client = res.json();",
+											"    pm.environment.set(\"new_client_id\", client.id); // Save client ID for the test",
+											"    console.log(\"New client created with ID:\", client.id);",
+											"  }",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Should return empty array if client has no payments\", () => {",
+											"  const jsonData = pm.response.json();",
+											"  pm.expect(jsonData).to.be.an(\"array\");",
+											"  pm.expect(jsonData.length).to.eql(0); ",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{auth_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/payments/{{new_client_id}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"payments",
+										"{{new_client_id}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Missing auth",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Request without token should fail\", () => {",
+											"  pm.response.to.have.status(403); ",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/payments/{{created_client_id}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"payments",
+										"{{created_client_id}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "response format",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Each payment has expected properties\", () => {",
+											"  const payments = pm.response.json();",
+											"  payments.forEach(p => {",
+											"    pm.expect(p).to.have.property(\"id\");",
+											"    pm.expect(p).to.have.property(\"amount\");",
+											"    pm.expect(p).to.have.property(\"collection_date\");",
+											"    pm.expect(p).to.have.property(\"loan_id\");",
+											"  });",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{auth_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/payments/{{created_client_id}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"payments",
+										"{{created_client_id}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Fetch payment with client and loand id",
+					"item": [
+						{
+							"name": "Successful",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Should return payment details for a specific client and loan\", () => {",
+											"  pm.response.to.have.status(200);",
+											"  const res = pm.response.json();",
+											"  pm.expect(res).to.be.an('array').that.is.not.empty;",
+											"  pm.expect(res[0]).to.have.property(\"amount\");",
+											"  pm.expect(res[0]).to.have.property(\"collection_date\");",
+											"  pm.expect(res[0]).to.have.property(\"loan_id\", 456);",
+											"  pm.expect(res[0]).to.have.property(\"client_id\", 123);",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{auth_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/payment/{{created_client_id}}/{{created_loan_id}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"payment",
+										"{{created_client_id}}",
+										"{{created_loan_id}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Missing token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Should fail if no token is provided\", () => {",
+											"  pm.response.to.have.status(403);  ",
+											"\treturn",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/payment/{{created_client_id}}/{{created_loan_id}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"payment",
+										"{{created_client_id}}",
+										"{{created_loan_id}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		}
+	]
+}
